@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OBE Attainment & CO-PO Mapping Tool | SKR & SKR GCW(A), Kadapa</title>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --primary: #1565C0;
+  --primary-dark: #0D47A1;
+  --accent: #FF6F00;
+  --accent2: #2E7D32;
+  --bg: #E3F2FD;
+  --card: #FFFFFF;
+  --text: #1A1A2E;
+  --muted: #546E7A;
+  --border: #90CAF9;
+  --success: #1B5E20;
+  --success-bg: #E8F5E9;
+  --warn: #E65100;
+  --warn-bg: #FFF3E0;
+  --danger: #B71C1C;
+  --danger-bg: #FFEBEE;
+  --shadow: 0 4px 24px rgba(21,101,192,0.13);
+  --radius: 14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);min-height:100vh;color:var(--text);font-size:17px;}
+.app-wrapper{max-width:1280px;margin:0 auto;padding:18px 14px 40px;}
+
+/* HEADER */
+.site-header{background:var(--primary);color:#fff;padding:18px 32px;border-radius:var(--radius) var(--radius) 0 0;margin-bottom:0;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.site-header .college{font-size:22px;font-weight:800;letter-spacing:0.5px;text-align:center;}
+.site-header .dept{font-size:16px;opacity:0.88;text-align:center;}
+.site-header .tool-title{font-size:28px;font-weight:900;margin-top:8px;text-align:center;color:#FFD54F;}
+
+/* STEPPER */
+.stepper{background:#fff;border-bottom:3px solid var(--border);display:flex;align-items:center;justify-content:center;gap:0;padding:0;overflow-x:auto;}
+.step-tab{padding:16px 26px;font-size:15px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:4px solid transparent;transition:all 0.2s;white-space:nowrap;display:flex;align-items:center;gap:8px;}
+.step-tab.active{color:var(--primary);border-bottom-color:var(--primary);background:#EEF4FF;}
+.step-tab.done{color:var(--accent2);}
+.step-tab .step-num{background:var(--border);color:var(--primary);border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;}
+.step-tab.active .step-num{background:var(--primary);color:#fff;}
+.step-tab.done .step-num{background:var(--accent2);color:#fff;}
+
+/* CARDS / STEP CONTAINERS */
+.step-container{display:none;background:var(--card);border-radius:0 0 var(--radius) var(--radius);box-shadow:var(--shadow);padding:38px 40px 44px;}
+.step-container.active{display:block;animation:fadeIn 0.35s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* TYPOGRAPHY */
+h1{font-size:38px;font-weight:900;color:var(--primary);}
+h2{font-size:30px;font-weight:800;color:var(--primary);margin-bottom:8px;}
+h3{font-size:22px;font-weight:700;color:var(--primary-dark);margin-bottom:10px;}
+h4{font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px;}
+p,label,td,th{font-size:16px;}
+.subtitle{color:var(--muted);font-size:16px;margin-bottom:18px;}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:24px;}
+.form-group{display:flex;flex-direction:column;}
+.form-group label{font-weight:700;color:var(--text);margin-bottom:7px;font-size:15px;}
+.form-group input,.form-group textarea,.form-group select{
+  padding:13px 14px;border:2px solid var(--border);border-radius:9px;
+  font-size:16px;font-family:inherit;transition:border-color 0.2s;background:#FAFCFF;}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:var(--primary);background:#fff;}
+.req{color:var(--accent);}
+
+/* BUTTONS */
+.btn-primary,.btn-secondary,.btn-success,.btn-warn{
+  padding:14px 30px;border:none;border-radius:9px;font-size:17px;
+  font-weight:700;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:8px;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover:not(:disabled){background:var(--primary-dark);box-shadow:0 6px 18px rgba(21,101,192,0.28);transform:translateY(-2px);}
+.btn-primary:disabled{opacity:0.45;cursor:not-allowed;}
+.btn-secondary{background:#E3EAF5;color:var(--primary);border:2px solid var(--border);}
+.btn-secondary:hover{background:#D0DCEE;}
+.btn-success{background:var(--accent2);color:#fff;}
+.btn-success:hover{background:#1B5E20;}
+.btn-warn{background:var(--accent);color:#fff;}
+.btn-warn:hover{background:#E65100;}
+.button-group{display:flex;gap:14px;margin-top:28px;flex-wrap:wrap;justify-content:center;}
+
+/* ALERTS */
+.alert{padding:14px 18px;border-radius:9px;margin:14px 0;font-size:16px;font-weight:600;display:none;}
+.alert.show{display:block;}
+.alert-error{background:var(--danger-bg);color:var(--danger);border:2px solid #EF9A9A;}
+.alert-success{background:var(--success-bg);color:var(--success);border:2px solid #A5D6A7;}
+.alert-info{background:#E3F2FD;color:var(--primary);border:2px solid #90CAF9;}
+
+/* FEATURES GRID */
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin:28px 0;}
+.feature-card{background:var(--bg);border:2px solid var(--border);border-radius:12px;padding:24px;text-align:center;transition:box-shadow 0.2s;}
+.feature-card:hover{box-shadow:var(--shadow);}
+.feature-icon{font-size:44px;margin-bottom:10px;}
+.feature-card h3{font-size:17px;margin-bottom:6px;}
+
+/* CO-PO MAPPING */
+.copo-section{margin:28px 0;}
+.copo-table-wrap{overflow-x:auto;border-radius:10px;border:2px solid var(--border);}
+.copo-table{width:100%;border-collapse:collapse;min-width:700px;}
+.copo-table th{background:var(--primary);color:#fff;padding:12px 10px;font-size:15px;font-weight:700;text-align:center;white-space:nowrap;}
+.copo-table td{padding:10px;border:1px solid var(--border);text-align:center;font-size:15px;}
+.copo-table td.co-label{text-align:left;font-weight:700;color:var(--primary-dark);background:#F0F7FF;min-width:260px;}
+.copo-table td.co-text{text-align:left;font-size:13px;color:var(--muted);background:#F8FBFF;}
+select.mapping-select{padding:5px 8px;border:2px solid var(--border);border-radius:6px;font-size:14px;font-weight:700;min-width:60px;}
+select.mapping-select.strong{border-color:#1565C0;color:#1565C0;background:#E3F2FD;}
+select.mapping-select.moderate{border-color:#FF8F00;color:#FF8F00;background:#FFF8E1;}
+select.mapping-select.weak{border-color:#388E3C;color:#388E3C;background:#E8F5E9;}
+select.mapping-select.none{border-color:#ccc;color:#999;background:#fafafa;}
+
+.legend-strip{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0 20px;align-items:center;}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:700;}
+.legend-dot{width:22px;height:22px;border-radius:5px;display:inline-block;}
+.legend-dot.strong{background:#E3F2FD;border:2px solid #1565C0;}
+.legend-dot.moderate{background:#FFF8E1;border:2px solid #FF8F00;}
+.legend-dot.weak{background:#E8F5E9;border:2px solid #388E3C;}
+.legend-dot.none{background:#fafafa;border:2px solid #ccc;}
+
+.scale-box{background:#F0F7FF;border:2px solid var(--border);border-radius:10px;padding:18px 22px;margin-bottom:18px;}
+.scale-box h4{color:var(--primary);margin-bottom:10px;}
+.scale-row{display:flex;gap:28px;flex-wrap:wrap;}
+.scale-item{display:flex;flex-direction:column;gap:4px;}
+.scale-item label{font-size:14px;font-weight:700;color:var(--muted);}
+.scale-item input{width:90px;padding:8px;border:2px solid var(--border);border-radius:7px;font-size:15px;font-weight:700;text-align:center;}
+
+/* CO INPUTS */
+.co-input-group{background:#F0F7FF;padding:18px 20px;border-radius:10px;margin-bottom:14px;border:2px solid var(--border);}
+.co-input-group .co-header{display:grid;grid-template-columns:90px 90px 1fr;gap:12px;align-items:center;margin-bottom:8px;}
+.co-input-group textarea{width:100%;padding:10px;border:2px solid var(--border);border-radius:7px;font-size:15px;font-family:inherit;resize:vertical;}
+
+/* UPLOAD */
+.upload-area{border:3px dashed var(--primary);border-radius:12px;padding:44px;text-align:center;background:#F0F7FF;cursor:pointer;transition:all 0.25s;margin:18px 0;}
+.upload-area:hover{border-color:var(--accent);background:#FFF8E1;}
+.upload-icon{font-size:52px;margin-bottom:14px;}
+
+/* PREVIEW TABLE */
+.data-preview{background:#F8FBFF;border:2px solid var(--border);border-radius:10px;padding:20px;margin:18px 0;overflow-x:auto;}
+.preview-table{width:100%;border-collapse:collapse;font-size:15px;}
+.preview-table th{background:var(--primary);color:#fff;padding:11px 10px;text-align:center;}
+.preview-table td{padding:10px;border-bottom:1px solid #CFE0F6;text-align:center;}
+.preview-table tr:nth-child(even) td{background:#F0F7FF;}
+
+/* METRICS */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin:22px 0;}
+.metric-card{background:var(--primary);color:#fff;padding:26px 20px;border-radius:12px;text-align:center;}
+.metric-value{font-size:36px;font-weight:900;margin-bottom:7px;}
+.metric-label{font-size:15px;opacity:0.9;}
+.metric-card.achieved{background:var(--accent2);}
+.metric-card.partial{background:#FF8F00;}
+.metric-card.low{background:var(--danger);}
+
+/* ANALYSIS TABLE */
+.analysis-table{background:#F8FBFF;border:2px solid var(--border);border-radius:10px;padding:20px;margin:18px 0;overflow-x:auto;}
+.analysis-table table{width:100%;border-collapse:collapse;font-size:16px;}
+.analysis-table th{background:var(--primary);color:#fff;padding:13px 12px;text-align:center;font-size:16px;}
+.analysis-table td{padding:12px;border-bottom:1px solid var(--border);text-align:center;}
+.analysis-table tr.level-3 td{background:#E8F5E9;color:#1B5E20;font-weight:700;}
+.analysis-table tr.level-2 td{background:#FFF8E1;color:#E65100;font-weight:700;}
+.analysis-table tr.level-1 td{background:#FFEBEE;color:var(--danger);font-weight:700;}
+
+/* SIGNATURE */
+.signature-section{margin-top:36px;border-top:3px solid var(--border);padding-top:28px;}
+.signature-row{display:grid;grid-template-columns:repeat(4,1fr);gap:30px;margin-top:28px;}
+.signature-block{text-align:center;}
+.signature-blank{border-bottom:2.5px solid #333;height:56px;margin-bottom:10px;}
+.signature-label{font-size:15px;color:#333;font-weight:700;}
+.signature-name{font-size:14px;color:var(--muted);margin-top:5px;}
+
+/* ACTION PLAN */
+.action-plan-box{background:#F8FBFF;border:2px solid var(--border);border-radius:10px;padding:22px 26px;margin:18px 0;}
+.action-section{margin-bottom:18px;}
+.action-section h4{color:var(--primary);font-size:18px;margin-bottom:10px;}
+.action-list{list-style:none;padding:0;}
+.action-list li{padding:8px 0 8px 26px;position:relative;font-size:16px;border-bottom:1px solid var(--border);}
+.action-list li::before{content:"•";position:absolute;left:8px;color:var(--primary);font-size:20px;font-weight:900;}
+
+/* FOOTER */
+.footer{text-align:center;padding:22px 16px;color:var(--muted);font-size:15px;margin-top:32px;border-top:2px solid var(--border);}
+.footer strong{color:var(--primary);}
+
+/* PO list */
+.po-list-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px;margin-bottom:20px;}
+.po-item{background:#F0F7FF;border:2px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;gap:10px;align-items:flex-start;}
+.po-num{font-weight:900;color:var(--primary);min-width:40px;font-size:16px;}
+.po-desc-input{flex:1;padding:8px;border:2px solid var(--border);border-radius:7px;font-size:14px;font-family:inherit;}
+
+/* SUMMARY CARD */
+.summary-card{background:var(--primary);color:#fff;border-radius:12px;padding:26px 30px;margin:18px 0;}
+.summary-card h3{color:#FFD54F;font-size:22px;}
+.summary-row{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;}
+.summary-item{flex:1;min-width:140px;}
+.summary-item .si-val{font-size:28px;font-weight:900;}
+.summary-item .si-label{font-size:14px;opacity:0.88;}
+
+/* Tab inner navigation */
+.inner-tabs{display:flex;gap:0;border-bottom:3px solid var(--border);margin-bottom:22px;overflow-x:auto;}
+.inner-tab{padding:12px 24px;font-size:16px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:4px solid transparent;transition:all 0.2s;white-space:nowrap;}
+.inner-tab.active{color:var(--primary);border-bottom-color:var(--primary);}
+.inner-panel{display:none;}
+.inner-panel.active{display:block;}
+
+@media(max-width:768px){
+  .step-container{padding:18px 10px 28px;}
+  .signature-row{grid-template-columns:1fr 1fr;}
+  .site-header .college{font-size:16px;}
+  .site-header .tool-title{font-size:20px;}
+}
+</style>
+</head>
+<body>
+<div class="app-wrapper">
+
+<!-- HEADER -->
+<div class="site-header">
+  <div class="college">SKR &amp; SKR GOVERNMENT COLLEGE FOR WOMEN (AUTONOMOUS), KADAPA</div>
+  <div class="dept" id="header-dept">DEPARTMENT OF COMPUTER SCIENCE</div>
+  <div class="tool-title">📊 OBE Attainment &amp; CO-PO Mapping Tool</div>
+</div>
+
+<!-- STEPPER -->
+<div class="stepper">
+  <div class="step-tab active" id="tab-welcome" onclick="goStep('welcome')"><span class="step-num">🏠</span> Home</div>
+  <div class="step-tab" id="tab-form" onclick="goStep('form')"><span class="step-num">1</span> Course Details</div>
+  <div class="step-tab" id="tab-copo" onclick="goStep('copo')"><span class="step-num">2</span> CO-PO Mapping</div>
+  <div class="step-tab" id="tab-upload" onclick="goStep('upload')"><span class="step-num">3</span> Upload CIA</div>
+  <div class="step-tab" id="tab-review" onclick="goStep('review')"><span class="step-num">4</span> Review &amp; Export</div>
+</div>
+
+<!-- STEP: WELCOME -->
+<div id="step-welcome" class="step-container active">
+  <div style="text-align:center;margin-bottom:32px;">
+    <div style="font-size:64px;margin-bottom:12px;">🎓</div>
+    <h1>OBE Attainment &amp; CO-PO Mapping</h1>
+    <p class="subtitle" style="font-size:18px;">NAAC-Ready Reports | Free for All Faculty | Audit-Compliant Export</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card"><div class="feature-icon">🔗</div><h3>CO-PO Mapping</h3><p>Map COs to POs with Strong, Moderate, Weak scales. Paste directly from syllabus.</p></div>
+    <div class="feature-card"><div class="feature-icon">📄</div><h3>PDF CIA Parse</h3><p>Upload CIA marks PDF — auto-extracts student marks into CO-wise table.</p></div>
+    <div class="feature-card"><div class="feature-icon">📊</div><h3>Attainment Analysis</h3><p>Automatic CO-level &amp; overall attainment with level calculation.</p></div>
+    <div class="feature-card"><div class="feature-icon">📥</div><h3>XLSX Export</h3><p>Multi-sheet Excel: CO-PO Map, Marks, Report, Attainment, Action Plan — matching your format.</p></div>
+    <div class="feature-card"><div class="feature-icon">🖨️</div><h3>PDF Report</h3><p>Print-ready subject report with signature blocks for HOD, IQAC, Principal.</p></div>
+    <div class="feature-card"><div class="feature-icon">✅</div><h3>Action Plan</h3><p>Auto-generated action plan based on CO attainment levels for audit.</p></div>
+  </div>
+  <div class="button-group">
+    <button class="btn-primary" onclick="goStep('form')">Get Started →</button>
+  </div>
+</div>
+
+<!-- STEP: COURSE DETAILS + CO SETUP -->
+<div id="step-form" class="step-container">
+  <h2>📝 Course Details &amp; Course Outcomes</h2>
+  <p class="subtitle">Step 1 — Fill course info, then define COs by pasting from the syllabus.</p>
+  <div id="alert-form"></div>
+
+  <div class="form-grid">
+    <div class="form-group"><label>Faculty Name <span class="req">*</span></label><input type="text" id="facultyName" placeholder="e.g., Dr. C. V. Krishnaveni"></div>
+    <div class="form-group"><label>Course Code <span class="req">*</span></label><input type="text" id="courseCode" placeholder="e.g., 5COM14"></div>
+    <div class="form-group"><label>Course Title <span class="req">*</span></label><input type="text" id="courseTitle" placeholder="e.g., Internet of Things"></div>
+    <div class="form-group"><label>Department</label><input type="text" id="department" value="Computer Science"></div>
+    <div class="form-group"><label>Programme</label><input type="text" id="programme" placeholder="e.g., B.Tech - Computer Science (Major)"></div>
+    <div class="form-group"><label>Semester <span class="req">*</span></label><input type="text" id="semester" placeholder="e.g., 5th"></div>
+    <div class="form-group"><label>Batch</label><input type="text" id="batch" placeholder="e.g., 2023-2027"></div>
+    <div class="form-group"><label>Academic Year</label><input type="text" id="academicYear" value="2025-26"></div>
+    <div class="form-group"><label>HOD/Incharge Name <span class="req">*</span></label><input type="text" id="hodName" placeholder="Head of Department"></div>
+    <div class="form-group"><label>IQAC Coordinator Name <span class="req">*</span></label><input type="text" id="iqacName" placeholder="IQAC Coordinator"></div>
+    <div class="form-group"><label>Principal Name <span class="req">*</span></label><input type="text" id="principalName" placeholder="Principal"></div>
+    <div class="form-group"><label>Threshold % for Attainment</label><input type="number" id="threshold" value="60" min="1" max="100"></div>
+  </div>
+
+  <div style="margin-top:28px;">
+    <h3>📋 Define Course Outcomes (COs)</h3>
+    <p class="subtitle">Copy and paste CO statements directly from the syllabus. Set marks for each CO.</p>
+    <div style="margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <label style="font-weight:700;font-size:16px;">Number of COs:</label>
+      <input type="number" id="coCount" min="1" max="10" value="4" style="width:80px;padding:10px;border:2px solid var(--border);border-radius:8px;font-size:16px;" oninput="updateCOCount(parseInt(this.value)||1)">
+    </div>
+    <div id="cos-container"></div>
+  </div>
+
+  <div class="button-group">
+    <button class="btn-secondary" onclick="goStep('welcome')">← Back</button>
+    <button class="btn-primary" onclick="validateFormAndNext()">Next: CO-PO Mapping →</button>
+  </div>
+</div>
+
+<!-- STEP: CO-PO MAPPING -->
+<div id="step-copo" class="step-container">
+  <h2>🔗 CO-PO Mapping</h2>
+  <p class="subtitle">Step 2 — Map each Course Outcome to Programme Outcomes. Set correlation strength.</p>
+  <div id="alert-copo"></div>
+
+  <div class="scale-box">
+    <h4>📏 Mapping Scale (Editable)</h4>
+    <div class="scale-row">
+      <div class="scale-item"><label>Strong (High)</label><input type="number" id="scale-strong" value="3" min="1" max="9"></div>
+      <div class="scale-item"><label>Moderate (Medium)</label><input type="number" id="scale-moderate" value="2" min="1" max="9"></div>
+      <div class="scale-item"><label>Weak (Low)</label><input type="number" id="scale-weak" value="1" min="1" max="9"></div>
+      <div class="scale-item"><label>No Mapping</label><input type="number" id="scale-none" value="0" min="0" max="0" disabled style="background:#eee;color:#aaa;"></div>
+    </div>
+  </div>
+
+  <div class="legend-strip">
+    <strong style="font-size:16px;">Legend:</strong>
+    <div class="legend-item"><div class="legend-dot strong"></div><span style="color:#1565C0;">Strong (3)</span></div>
+    <div class="legend-item"><div class="legend-dot moderate"></div><span style="color:#FF8F00;">Moderate (2)</span></div>
+    <div class="legend-item"><div class="legend-dot weak"></div><span style="color:#388E3C;">Weak (1)</span></div>
+    <div class="legend-item"><div class="legend-dot none"></div><span style="color:#aaa;">No Mapping (–)</span></div>
+  </div>
+
+  <div style="margin-bottom:20px;">
+    <h3>Programme Outcomes (POs) — Edit as needed</h3>
+    <div id="po-list-container"></div>
+  </div>
+
+  <div class="copo-section">
+    <h3>CO-PO Mapping Matrix</h3>
+    <div class="copo-table-wrap" id="copo-matrix-container"></div>
+  </div>
+
+  <div class="button-group">
+    <button class="btn-secondary" onclick="goStep('form')">← Back</button>
+    <button class="btn-primary" onclick="goStep('upload')">Next: Upload CIA →</button>
+  </div>
+</div>
+
+<!-- STEP: UPLOAD CIA -->
+<div id="step-upload" class="step-container">
+  <h2>📄 Upload CIA Data</h2>
+  <p class="subtitle">Step 3 — Upload CIA marks PDF. The tool will extract roll numbers and CO-wise marks.</p>
+  <div id="alert-upload"></div>
+
+  <div class="upload-area" onclick="document.getElementById('pdfInput').click()">
+    <div class="upload-icon">📁</div>
+    <p style="font-size:20px;font-weight:700;color:var(--primary);">Click to upload CIA PDF</p>
+    <p style="color:var(--muted);margin-top:6px;">Supports: CIA marks statement PDF with roll numbers and marks</p>
+  </div>
+  <input id="pdfInput" type="file" accept=".pdf" onchange="handlePDFUpload(event)" style="display:none;">
+
+  <div style="background:#FFF8E1;border:2px solid #FFD54F;border-radius:10px;padding:16px 20px;margin:12px 0;">
+    <strong style="font-size:16px;color:#E65100;">📝 If PDF extraction doesn't match your format:</strong>
+    <p style="margin-top:8px;color:#555;font-size:15px;">You can manually enter/edit marks in the table below after uploading. Click any cell to edit it.</p>
+  </div>
+
+  <div id="data-preview-container"></div>
+
+  <div style="margin-top:22px;background:#F0F7FF;border:2px solid var(--border);border-radius:10px;padding:18px 22px;">
+    <h4>Or Enter Marks Manually</h4>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:10px;">
+      <button class="btn-secondary" onclick="addStudentRow()">+ Add Student Row</button>
+      <button class="btn-secondary" onclick="clearAllData()">🗑 Clear All</button>
+      <button class="btn-success" onclick="enableContinue()">✓ Confirm Data &amp; Continue</button>
+    </div>
+    <div id="manual-table-container" style="margin-top:14px;overflow-x:auto;"></div>
+  </div>
+
+  <div class="button-group">
+    <button class="btn-secondary" onclick="goStep('copo')">← Back</button>
+    <button class="btn-primary" id="continueBtn" onclick="goStep('review')" disabled>Next: Review &amp; Export →</button>
+  </div>
+</div>
+
+<!-- STEP: REVIEW & EXPORT -->
+<div id="step-review" class="step-container">
+  <h2>✅ Review &amp; Export</h2>
+  <p class="subtitle">Step 4 — Review attainment results, action plan, and download your reports.</p>
+  <div id="alert-review"></div>
+
+  <div class="inner-tabs">
+    <div class="inner-tab active" onclick="showInnerTab('summary')">📊 Summary</div>
+    <div class="inner-tab" onclick="showInnerTab('coanalysis')">📋 CO Analysis</div>
+    <div class="inner-tab" onclick="showInnerTab('copo-review')">🔗 CO-PO Map</div>
+    <div class="inner-tab" onclick="showInnerTab('actionplan')">📌 Action Plan</div>
+    <div class="inner-tab" onclick="showInnerTab('signatures')">✍️ Signatures</div>
+  </div>
+
+  <div id="inner-summary" class="inner-panel active">
+    <div id="metrics-container"></div>
+    <div id="summary-container"></div>
+  </div>
+  <div id="inner-coanalysis" class="inner-panel">
+    <div id="analysis-container"></div>
+  </div>
+  <div id="inner-copo-review" class="inner-panel">
+    <div id="copo-review-container"></div>
+  </div>
+  <div id="inner-actionplan" class="inner-panel">
+    <div id="actionplan-container"></div>
+  </div>
+  <div id="inner-signatures" class="inner-panel">
+    <div class="signature-section">
+      <h3>Signature Block — Print &amp; Get Signed for Audit Submission</h3>
+      <div class="signature-row">
+        <div class="signature-block"><div class="signature-blank"></div><div class="signature-label">Course Teacher / Lecturer</div><div class="signature-name" id="sig-lecturer-name"></div></div>
+        <div class="signature-block"><div class="signature-blank"></div><div class="signature-label">HOD / Incharge</div><div class="signature-name" id="sig-hod-name"></div></div>
+        <div class="signature-block"><div class="signature-blank"></div><div class="signature-label">IQAC Coordinator</div><div class="signature-name" id="sig-iqac-name"></div></div>
+        <div class="signature-block"><div class="signature-blank"></div><div class="signature-label">Principal</div><div class="signature-name" id="sig-principal-name"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="button-group" style="margin-top:32px;">
+    <button class="btn-secondary" onclick="goStep('upload')">← Back</button>
+    <button class="btn-primary" onclick="generateExcelReport()">📥 Download XLSX Report</button>
+    <button class="btn-warn" onclick="generatePDFReport()">🖨️ Print / Save as PDF</button>
+  </div>
+</div>
+
+</div><!-- end app-wrapper -->
+
+<!-- FOOTER -->
+<div class="footer">
+  <p>© <strong>Dr. C. V. Krishnaveni</strong>, Lecturer in Computer Science</p>
+  <p>SKR &amp; SKR Government College for Women (Autonomous), Kadapa</p>
+  <p style="margin-top:6px;font-size:13px;color:#90A4AE;">This tool is free for all faculty use. No data is stored or transmitted. All processing happens in your browser.</p>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+// ==========================
+// APP STATE
+// ==========================
+let appState = {
+  courseOutcomes: [
+    {marks:8, description:''},
+    {marks:6, description:''},
+    {marks:6, description:''},
+    {marks:5, description:''}
+  ],
+  programmeOutcomes: [
+    {code:'PO1', description:'Engineering Knowledge'},
+    {code:'PO2', description:'Problem Analysis'},
+    {code:'PO3', description:'Design/Development of Solutions'},
+    {code:'PO4', description:'Conduct Investigations of Complex Problems'},
+    {code:'PO5', description:'Modern Tool Usage'},
+    {code:'PO6', description:'The Engineer and Society'},
+    {code:'PO7', description:'Environment and Sustainability'},
+    {code:'PO8', description:'Ethics'},
+    {code:'PO9', description:'Individual and Team Work'},
+    {code:'PO10', description:'Communication'},
+    {code:'PO11', description:'Project Management and Finance'},
+    {code:'PO12', description:'Life-long Learning'},
+    {code:'PSO1', description:'Programme Specific Outcome 1'},
+    {code:'PSO2', description:'Programme Specific Outcome 2'}
+  ],
+  copoMapping: {}, // coIdx -> poCode -> value (0,1,2,3)
+  ciaData: [],
+  threshold: 60
+};
+
+// ==========================
+// NAVIGATION
+// ==========================
+function goStep(step) {
+  document.querySelectorAll('.step-container').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.step-tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('step-'+step).classList.add('active');
+  document.getElementById('tab-'+step).classList.add('active');
+  window.scrollTo(0,0);
+  if(step==='copo') renderCOPOMapping();
+  if(step==='review') renderReview();
+  if(step==='upload') renderManualTable();
+  // update header dept
+  const dept = document.getElementById('department').value;
+  if(dept) document.getElementById('header-dept').textContent = 'DEPARTMENT OF '+dept.toUpperCase();
+}
+
+function showInnerTab(name) {
+  document.querySelectorAll('.inner-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.inner-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('inner-'+name).classList.add('active');
+  const idx = ['summary','coanalysis','copo-review','actionplan','signatures'].indexOf(name);
+  document.querySelectorAll('.inner-tab')[idx].classList.add('active');
+}
+
+// ==========================
+// ALERTS
+// ==========================
+function showAlert(containerId, msg, type='info') {
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  el.innerHTML = `<div class="alert alert-${type} show">${msg}</div>`;
+  setTimeout(()=>el.innerHTML='', 5000);
+}
+
+// ==========================
+// STEP 1: CO SETUP
+// ==========================
+function renderCOInputs() {
+  const container = document.getElementById('cos-container');
+  let html = '';
+  appState.courseOutcomes.forEach((co, i) => {
+    html += `
+    <div class="co-input-group">
+      <div class="co-header">
+        <span style="font-size:18px;font-weight:900;color:var(--primary);">CO${i+1}</span>
+        <div>
+          <label style="font-size:13px;font-weight:700;color:var(--muted);">Max Marks</label>
+          <input type="number" min="1" max="100" value="${co.marks||5}" style="width:80px;padding:8px;border:2px solid var(--border);border-radius:7px;font-size:15px;"
+            oninput="appState.courseOutcomes[${i}].marks=parseInt(this.value)||1">
+        </div>
+        <span style="font-size:13px;color:var(--muted);">← marks allocated to this CO in CIA</span>
+      </div>
+      <textarea rows="2" placeholder="Paste CO${i+1} statement from syllabus here..."
+        oninput="appState.courseOutcomes[${i}].description=this.value"
+        style="width:100%;padding:10px;border:2px solid var(--border);border-radius:7px;font-size:15px;font-family:inherit;">${co.description||''}</textarea>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function updateCOCount(n) {
+  n = Math.max(1, Math.min(10, n||1));
+  while(appState.courseOutcomes.length < n)
+    appState.courseOutcomes.push({marks:5, description:''});
+  appState.courseOutcomes.length = n;
+  renderCOInputs();
+  renderPOList();
+}
+
+function validateFormAndNext() {
+  const required = ['facultyName','courseCode','courseTitle','semester','hodName','iqacName','principalName'];
+  for(let f of required) {
+    if(!document.getElementById(f).value.trim()) {
+      showAlert('alert-form', `⚠ Please fill in: ${f.replace(/([A-Z])/g,' $1').toLowerCase()}`, 'error'); return;
+    }
+  }
+  // Sync CO descriptions from inputs
+  document.querySelectorAll('#cos-container textarea').forEach((ta,i)=>{
+    if(appState.courseOutcomes[i]) appState.courseOutcomes[i].description = ta.value;
+  });
+  appState.threshold = parseInt(document.getElementById('threshold').value)||60;
+  goStep('copo');
+}
+
+renderCOInputs();
+
+// ==========================
+// STEP 2: CO-PO MAPPING
+// ==========================
+const DEFAULT_POS = [
+  {code:'PO1',description:'Engineering Knowledge'},
+  {code:'PO2',description:'Problem Analysis'},
+  {code:'PO3',description:'Design/Development of Solutions'},
+  {code:'PO4',description:'Conduct Investigations of Complex Problems'},
+  {code:'PO5',description:'Modern Tool Usage'},
+  {code:'PO6',description:'The Engineer and Society'},
+  {code:'PO7',description:'Environment and Sustainability'},
+  {code:'PO8',description:'Ethics'},
+  {code:'PO9',description:'Individual and Team Work'},
+  {code:'PO10',description:'Communication'},
+  {code:'PO11',description:'Project Management and Finance'},
+  {code:'PO12',description:'Life-long Learning'},
+  {code:'PSO1',description:'Programme Specific Outcome 1'},
+  {code:'PSO2',description:'Programme Specific Outcome 2'}
+];
+
+function renderPOList() {
+  const container = document.getElementById('po-list-container');
+  if(!container) return;
+  let html = '<div class="po-list-grid">';
+  appState.programmeOutcomes.forEach((po,i) => {
+    html += `<div class="po-item">
+      <span class="po-num">${po.code}</span>
+      <input class="po-desc-input" type="text" value="${po.description}"
+        oninput="appState.programmeOutcomes[${i}].description=this.value;renderCOPOMapping()">
+    </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function getMapping(coIdx, poCode) {
+  return appState.copoMapping[coIdx]?.[poCode] ?? 0;
+}
+
+function setMapping(coIdx, poCode, val) {
+  if(!appState.copoMapping[coIdx]) appState.copoMapping[coIdx] = {};
+  appState.copoMapping[coIdx][poCode] = parseInt(val)||0;
+  updateLegend();
+}
+
+function getMappingClass(val) {
+  if(val==3) return 'strong';
+  if(val==2) return 'moderate';
+  if(val==1) return 'weak';
+  return 'none';
+}
+
+function getMappingLabel(val) {
+  if(val==3) return '3';
+  if(val==2) return '2';
+  if(val==1) return '1';
+  return '–';
+}
+
+function renderCOPOMapping() {
+  renderPOList();
+  const container = document.getElementById('copo-matrix-container');
+  if(!container) return;
+  const pos = appState.programmeOutcomes;
+  const cos = appState.courseOutcomes;
+
+  let html = `<table class="copo-table">
+    <thead><tr>
+      <th style="text-align:left;min-width:220px;">Course Outcome</th>
+      ${pos.map(po=>`<th title="${po.description}">${po.code}</th>`).join('')}
+    </tr></thead>
+    <tbody>`;
+
+  cos.forEach((co, i) => {
+    html += `<tr>
+      <td class="co-label">
+        <div style="font-size:16px;font-weight:800;">CO${i+1}</div>
+        <div style="font-size:12px;color:var(--muted);font-weight:400;margin-top:3px;">${co.description||'(no description)'}</div>
+      </td>`;
+    pos.forEach(po => {
+      const val = getMapping(i, po.code);
+      const cls = getMappingClass(val);
+      html += `<td>
+        <select class="mapping-select ${cls}" onchange="setMapping(${i},'${po.code}',this.value);this.className='mapping-select '+getMappingClass(parseInt(this.value))">
+          <option value="0" ${val==0?'selected':''}>–</option>
+          <option value="1" ${val==1?'selected':''}>1</option>
+          <option value="2" ${val==2?'selected':''}>2</option>
+          <option value="3" ${val==3?'selected':''}>3</option>
+        </select>
+      </td>`;
+    });
+    html += `</tr>`;
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+  updateLegend();
+}
+
+function updateLegend() {
+  // Update legend dots with actual scale values
+  const strong = document.getElementById('scale-strong').value||3;
+  const moderate = document.getElementById('scale-moderate').value||2;
+  const weak = document.getElementById('scale-weak').value||1;
+  document.querySelectorAll('.legend-item').forEach((li,i)=>{
+    if(i===0) li.querySelector('span').textContent=`Strong (${strong})`;
+    if(i===1) li.querySelector('span').textContent=`Moderate (${moderate})`;
+    if(i===2) li.querySelector('span').textContent=`Weak (${weak})`;
+  });
+}
+
+renderPOList();
+
+// ==========================
+// STEP 3: CIA UPLOAD
+// ==========================
+async function handlePDFUpload(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  showAlert('alert-upload','⏳ Reading PDF, please wait...','info');
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+    let fullText = '';
+    for(let i=1; i<=pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const tc = await page.getTextContent();
+      fullText += tc.items.map(item=>item.str).join(' ') + '\n';
+    }
+    const parsed = parseCIAFromText(fullText);
+    if(parsed.length > 0) {
+      appState.ciaData = parsed;
+      renderDataPreview();
+      renderManualTable();
+      document.getElementById('continueBtn').disabled = false;
+      showAlert('alert-upload', `✅ PDF parsed! Found ${parsed.length} student records.`, 'success');
+    } else {
+      showAlert('alert-upload', '⚠ Could not auto-parse PDF. Please enter marks manually below.', 'error');
+      renderManualTable();
+    }
+  } catch(e) {
+    showAlert('alert-upload','❌ Error reading PDF: '+e.message,'error');
+  }
+}
+
+function parseCIAFromText(text) {
+  const lines = text.split(/\n|\r/);
+  const data = [];
+  const nCOs = appState.courseOutcomes.length;
+  // Try various roll number patterns
+  const patterns = [
+    // 11-digit roll + marks
+    new RegExp(`(\\d{10,13})\\s+([A-Z][A-Z .]+?)\\s+${Array(nCOs).fill('(\\d+(?:\\.\\d+)?)').join('\\s+')}`,'i'),
+    // fallback: roll number + any numbers
+    /(\d{10,13})\s+([\d\s]+)/
+  ];
+  lines.forEach(line => {
+    // Try strict pattern first
+    const m1 = line.match(new RegExp(`(\\d{10,13})\\s+([A-Za-z .]+?)\\s+((?:\\d+(?:\\.\\d+)?\\s+){${nCOs-1}}\\d+(?:\\.\\d+)?)`, 'i'));
+    if(m1) {
+      const marksStr = m1[3].trim().split(/\s+/);
+      const marks = marksStr.slice(0,nCOs).map(m=>parseFloat(m)||0);
+      while(marks.length < nCOs) marks.push(0);
+      data.push({rollNo:m1[1], studentName:m1[2].trim(), marks});
+      return;
+    }
+    // Try numbers only pattern (roll + marks, no name)
+    const m2 = line.match(/(\d{10,13})\s+((?:\d+(?:\.\d+)?\s+){1,})/);
+    if(m2) {
+      const nums = m2[2].trim().split(/\s+/).map(Number);
+      if(nums.length >= nCOs) {
+        const marks = nums.slice(0,nCOs);
+        data.push({rollNo:m2[1], studentName:'', marks});
+      }
+    }
+  });
+  return data;
+}
+
+function renderDataPreview() {
+  const container = document.getElementById('data-preview-container');
+  if(!container || appState.ciaData.length===0) return;
+  const show = appState.ciaData.slice(0,5);
+  let html = `<div class="data-preview">
+    <h4 style="margin-bottom:12px;">📋 Preview (${appState.ciaData.length} students parsed)</h4>
+    <table class="preview-table">
+      <thead><tr><th>Roll No</th><th>Name</th>${appState.courseOutcomes.map((_,i)=>`<th>CO${i+1}</th>`).join('')}<th>Total</th></tr></thead>
+      <tbody>
+        ${show.map(s=>`<tr>
+          <td>${s.rollNo}</td><td>${s.studentName||'—'}</td>
+          ${s.marks.map(m=>`<td>${m}</td>`).join('')}
+          <td><strong>${s.marks.reduce((a,b)=>a+b,0)}</strong></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    ${appState.ciaData.length>5?`<p style="margin-top:10px;color:var(--muted);">...and ${appState.ciaData.length-5} more students</p>`:''}
+  </div>`;
+  container.innerHTML = html;
+}
+
+function renderManualTable() {
+  const container = document.getElementById('manual-table-container');
+  if(!container) return;
+  const nCOs = appState.courseOutcomes.length;
+  let html = `<table class="preview-table" style="min-width:600px;">
+    <thead><tr>
+      <th>#</th><th>Roll No</th><th>Student Name</th>
+      ${appState.courseOutcomes.map((_,i)=>`<th>CO${i+1}<br><small style="font-weight:400;">(max ${appState.courseOutcomes[i].marks})</small></th>`).join('')}
+      <th>Total</th><th>Action</th>
+    </tr></thead>
+    <tbody id="manual-tbody">`;
+  appState.ciaData.forEach((s,si)=>{
+    const total = s.marks.reduce((a,b)=>a+b,0);
+    html += `<tr id="row-${si}">
+      <td>${si+1}</td>
+      <td><input type="text" value="${s.rollNo}" style="width:130px;padding:5px;border:1px solid var(--border);border-radius:5px;font-size:14px;" oninput="appState.ciaData[${si}].rollNo=this.value"></td>
+      <td><input type="text" value="${s.studentName||''}" style="width:150px;padding:5px;border:1px solid var(--border);border-radius:5px;font-size:14px;" oninput="appState.ciaData[${si}].studentName=this.value"></td>
+      ${s.marks.map((m,mi)=>`<td><input type="number" value="${m}" min="0" max="${appState.courseOutcomes[mi].marks}" style="width:65px;padding:5px;border:1px solid var(--border);border-radius:5px;font-size:14px;text-align:center;" oninput="updateMark(${si},${mi},this.value);updateRowTotal(${si})"></td>`).join('')}
+      <td id="row-total-${si}"><strong>${total}</strong></td>
+      <td><button onclick="removeRow(${si})" style="background:#FFEBEE;color:var(--danger);border:1px solid #EF9A9A;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:14px;">✕</button></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+  if(appState.ciaData.length>0) document.getElementById('continueBtn').disabled=false;
+}
+
+function updateMark(si,mi,val) {
+  appState.ciaData[si].marks[mi] = parseFloat(val)||0;
+}
+
+function updateRowTotal(si) {
+  const total = appState.ciaData[si].marks.reduce((a,b)=>a+b,0);
+  const el = document.getElementById('row-total-'+si);
+  if(el) el.innerHTML = `<strong>${total}</strong>`;
+}
+
+function removeRow(si) {
+  appState.ciaData.splice(si,1);
+  renderManualTable();
+}
+
+function addStudentRow() {
+  appState.ciaData.push({rollNo:'', studentName:'', marks:appState.courseOutcomes.map(()=>0)});
+  renderManualTable();
+  document.getElementById('continueBtn').disabled=false;
+}
+
+function clearAllData() {
+  if(confirm('Clear all student data?')) {
+    appState.ciaData=[];
+    renderManualTable();
+    document.getElementById('data-preview-container').innerHTML='';
+    document.getElementById('continueBtn').disabled=true;
+  }
+}
+
+function enableContinue() {
+  document.getElementById('continueBtn').disabled = false;
+  showAlert('alert-upload','✅ Data confirmed! Click "Next" to proceed.','success');
+}
+
+// ==========================
+// STEP 4: REVIEW
+// ==========================
+function calcAttainmentLevel(pct) {
+  if(pct >= 60) return 3;
+  if(pct >= 30) return 2;
+  return 1;
+}
+
+function generateMetrics() {
+  if(appState.ciaData.length===0) return null;
+  const threshold = appState.threshold||60;
+  const totalMax = appState.courseOutcomes.reduce((s,co)=>s+co.marks,0);
+  const coMetrics = {};
+  appState.courseOutcomes.forEach((co,idx)=>{
+    coMetrics[`CO${idx+1}`] = {
+      totalMarks: co.marks, description: co.description||'',
+      studentPercentages:[], studentsAboveThreshold:0,
+      classAttainmentPercent:0, attainmentLevel:0
+    };
+  });
+  appState.ciaData.forEach(student=>{
+    if(!student.marks) return;
+    student.marks.forEach((mark,idx)=>{
+      const key = `CO${idx+1}`;
+      const maxM = coMetrics[key].totalMarks;
+      const pct = maxM>0?(mark/maxM)*100:0;
+      coMetrics[key].studentPercentages.push(pct);
+      if(pct >= threshold) coMetrics[key].studentsAboveThreshold++;
+    });
+  });
+  Object.keys(coMetrics).forEach(co=>{
+    const m = coMetrics[co];
+    m.classAttainmentPercent = appState.ciaData.length>0
+      ?(m.studentsAboveThreshold/appState.ciaData.length)*100:0;
+    m.attainmentLevel = calcAttainmentLevel(m.classAttainmentPercent);
+  });
+  const allTotals = appState.ciaData.map(s=>
+    (s.marks||[]).reduce((a,b)=>a+b,0)
+  );
+  const overallAvgPct = allTotals.length>0
+    ?(allTotals.reduce((a,b)=>a+b,0)/allTotals.length/totalMax)*100:0;
+  const avgAttainment = Object.values(coMetrics).reduce((s,m)=>s+m.classAttainmentPercent,0)/Object.keys(coMetrics).length;
+  return {coMetrics, totalMax, overallAvgPct, avgAttainment, totalStudents:appState.ciaData.length, threshold};
+}
+
+function renderReview() {
+  const metrics = generateMetrics();
+  if(!metrics) {
+    showAlert('alert-review','⚠ No CIA data found. Please go back and upload/enter data.','error');
+    return;
+  }
+
+  // Summary
+  const achieved = Object.values(metrics.coMetrics).filter(m=>m.attainmentLevel===3).length;
+  const partial = Object.values(metrics.coMetrics).filter(m=>m.attainmentLevel===2).length;
+  const low = Object.values(metrics.coMetrics).filter(m=>m.attainmentLevel===1).length;
+
+  document.getElementById('metrics-container').innerHTML = `
+    <div class="metrics-grid">
+      <div class="metric-card"><div class="metric-value">${metrics.totalStudents}</div><div class="metric-label">Total Students</div></div>
+      <div class="metric-card"><div class="metric-value">${metrics.overallAvgPct.toFixed(2)}%</div><div class="metric-label">Avg CIA Score %</div></div>
+      <div class="metric-card"><div class="metric-value">${metrics.avgAttainment.toFixed(2)}%</div><div class="metric-label">Avg CO Attainment %</div></div>
+      <div class="metric-card achieved"><div class="metric-value">${achieved}</div><div class="metric-label">COs Achieved (Level 3)</div></div>
+      <div class="metric-card partial"><div class="metric-value">${partial}</div><div class="metric-label">Partially Achieved (Level 2)</div></div>
+      <div class="metric-card low"><div class="metric-value">${low}</div><div class="metric-label">Not Achieved (Level 1)</div></div>
+    </div>`;
+
+  document.getElementById('summary-container').innerHTML = `
+    <div class="summary-card">
+      <h3>📄 ${document.getElementById('courseTitle').value} (${document.getElementById('courseCode').value})</h3>
+      <div class="summary-row" style="margin-top:14px;">
+        <div class="summary-item"><div class="si-val">${document.getElementById('semester').value}</div><div class="si-label">Semester</div></div>
+        <div class="summary-item"><div class="si-val">${document.getElementById('academicYear').value}</div><div class="si-label">Academic Year</div></div>
+        <div class="summary-item"><div class="si-val">${document.getElementById('facultyName').value}</div><div class="si-label">Course Teacher</div></div>
+        <div class="summary-item"><div class="si-val">${metrics.threshold}%</div><div class="si-label">Threshold</div></div>
+      </div>
+    </div>`;
+
+  // CO Analysis
+  let analysisHtml = `<div class="analysis-table"><table>
+    <thead><tr>
+      <th>CO</th><th>Description</th><th>Max Marks</th>
+      <th>Students ≥ ${metrics.threshold}%</th>
+      <th>Class Attainment %</th><th>Level</th><th>Status</th>
+    </tr></thead><tbody>`;
+  Object.keys(metrics.coMetrics).forEach(co=>{
+    const m = metrics.coMetrics[co];
+    const status = m.attainmentLevel===3?'✅ Achieved':m.attainmentLevel===2?'⚠ Partially Achieved':'❌ Not Achieved';
+    analysisHtml += `<tr class="level-${m.attainmentLevel}">
+      <td><strong>${co}</strong></td>
+      <td style="text-align:left;">${m.description}</td>
+      <td>${m.totalMarks}</td>
+      <td>${m.studentsAboveThreshold} / ${metrics.totalStudents}</td>
+      <td><strong>${m.classAttainmentPercent.toFixed(2)}%</strong></td>
+      <td><strong>${m.attainmentLevel}</strong></td>
+      <td>${status}</td>
+    </tr>`;
+  });
+  analysisHtml += '</tbody></table></div>';
+  document.getElementById('analysis-container').innerHTML = analysisHtml;
+
+  // CO-PO Review
+  const pos = appState.programmeOutcomes;
+  let copoHtml = `<div class="analysis-table"><table class="copo-table">
+    <thead><tr>
+      <th style="text-align:left;">Course Outcome</th>
+      ${pos.map(po=>`<th title="${po.description}">${po.code}</th>`).join('')}
+    </tr></thead><tbody>`;
+  appState.courseOutcomes.forEach((co,i)=>{
+    copoHtml += `<tr><td class="co-label"><strong>CO${i+1}</strong>: ${co.description||''}</td>`;
+    pos.forEach(po=>{
+      const val = getMapping(i,po.code);
+      const lbl = val>0?val:'–';
+      const cls = val===3?'background:#E3F2FD;color:#1565C0;font-weight:700;':
+                  val===2?'background:#FFF8E1;color:#FF8F00;font-weight:700;':
+                  val===1?'background:#E8F5E9;color:#388E3C;font-weight:700;':'color:#ccc;';
+      copoHtml += `<td style="${cls}">${lbl}</td>`;
+    });
+    copoHtml += '</tr>';
+  });
+  copoHtml += '</tbody></table></div>';
+  document.getElementById('copo-review-container').innerHTML = copoHtml;
+
+  // Action Plan
+  renderActionPlan(metrics);
+
+  // Signatures
+  document.getElementById('sig-lecturer-name').textContent = document.getElementById('facultyName').value||'Faculty';
+  document.getElementById('sig-hod-name').textContent = document.getElementById('hodName').value||'HOD';
+  document.getElementById('sig-iqac-name').textContent = document.getElementById('iqacName').value||'IQAC';
+  document.getElementById('sig-principal-name').textContent = document.getElementById('principalName').value||'Principal';
+}
+
+function renderActionPlan(metrics) {
+  const courseTitle = document.getElementById('courseTitle').value;
+  const cos = Object.keys(metrics.coMetrics);
+  const achievedCOs = cos.filter(co=>metrics.coMetrics[co].attainmentLevel===3);
+  const partialCOs = cos.filter(co=>metrics.coMetrics[co].attainmentLevel===2);
+  const lowCOs = cos.filter(co=>metrics.coMetrics[co].attainmentLevel===1);
+
+  let strengths = [];
+  let improvements = [];
+  let recommendations = [];
+
+  if(achievedCOs.length>0)
+    strengths.push(`Strong attainment in ${achievedCOs.join(', ')} — class average above threshold`);
+  if(metrics.overallAvgPct>=75)
+    strengths.push(`High overall CIA average (${metrics.overallAvgPct.toFixed(1)}%) indicating good student engagement`);
+  if(metrics.totalStudents>=20)
+    strengths.push(`Adequate class strength (${metrics.totalStudents} students) supports reliable attainment analysis`);
+
+  if(partialCOs.length>0)
+    improvements.push(`${partialCOs.join(', ')} are partially attained — targeted intervention needed`);
+  if(lowCOs.length>0)
+    improvements.push(`${lowCOs.join(', ')} require urgent remedial action (below 30% attainment)`);
+  improvements.push('Identify students below threshold for additional support sessions');
+  improvements.push('Review question paper design to better align with CO expectations');
+
+  recommendations.push('Conduct remedial/bridge classes for students below 60% in each CO');
+  recommendations.push('Introduce assignment and problem-solving exercises mapped to weak COs');
+  recommendations.push('Use active learning strategies: case studies, group projects, and peer teaching');
+  recommendations.push('Review and strengthen CO-PO mapping alignment with teaching activities');
+  if(lowCOs.length>0)
+    recommendations.push(`For ${lowCOs.join(', ')}: redesign learning activities and provide extra tutorial sessions`);
+  recommendations.push('Share attainment data with students for self-reflection and improvement');
+
+  document.getElementById('actionplan-container').innerHTML = `
+    <div class="action-plan-box">
+      <div class="action-section">
+        <h4>💪 Strengths</h4>
+        <ul class="action-list">${strengths.map(s=>`<li>${s}</li>`).join('')}</ul>
+      </div>
+      <div class="action-section">
+        <h4>🔧 Areas for Improvement</h4>
+        <ul class="action-list">${improvements.map(s=>`<li>${s}</li>`).join('')}</ul>
+      </div>
+      <div class="action-section">
+        <h4>📌 Recommendations</h4>
+        <ul class="action-list">${recommendations.map(s=>`<li>${s}</li>`).join('')}</ul>
+      </div>
+    </div>`;
+  appState._actionPlan = {strengths, improvements, recommendations};
+}
+
+// ==========================
+// EXCEL EXPORT
+// ==========================
+function generateExcelReport() {
+  const metrics = generateMetrics();
+  if(!metrics) { showAlert('alert-review','No data to export','error'); return; }
+
+  const wb = XLSX.utils.book_new();
+  const fName = document.getElementById('facultyName').value;
+  const cCode = document.getElementById('courseCode').value;
+  const cTitle = document.getElementById('courseTitle').value;
+  const sem = document.getElementById('semester').value;
+  const ay = document.getElementById('academicYear').value;
+  const dept = document.getElementById('department').value;
+  const prog = document.getElementById('programme').value;
+  const batch = document.getElementById('batch').value;
+  const hodN = document.getElementById('hodName').value;
+  const iqacN = document.getElementById('iqacName').value;
+  const princN = document.getElementById('principalName').value;
+
+  // --- Sheet 1: About OBE ---
+  const aboutData = [
+    ['SKR & SKR GOVT. COLLEGE FOR WOMEN (A), KADAPA'],['DEPARTMENT OF '+dept.toUpperCase()],[''],
+    ['ATTAINMENT OF COURSE OUTCOMES'],[''],
+    ['CO Computation'],[''],
+    ['Rule 1:', '', 'X = % Attainment in a given CO at student level', '', '', '(Total Marks scored by student / Total Max marks to all questions of that CO) × 100'],
+    [''],
+    ['Rule 2:', '', '% Attainment in a given CO at class level', '', '', '(Total students reaching target using Rule 1 / Total students registered) × 100'],
+    [''],['Data Entry Steps'],[''],
+    ['', '1. Calculate the marks secured by the student "CO-wise" for each CIA'],
+    ['', '2. If student is absent, enter "0"'],
+    ['', '3. If student has not answered CIA, enter "0"'],
+    ['', '4. Enter marks for all CIAs conducted in that course'],
+    [''],['© Dr. C. V. Krishnaveni, Lecturer in Computer Science, SKR & SKR GCW(A), Kadapa']
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aboutData), 'About OBE');
+
+  // --- Sheet 2: CO-PO Mapping ---
+  const pos = appState.programmeOutcomes;
+  const copoHeader = ['Course Outcome / CO Description', ...pos.map(p=>p.code)];
+  const copoRows = [copoHeader];
+  appState.courseOutcomes.forEach((co,i)=>{
+    const row = [`CO${i+1}: ${co.description||''}`];
+    pos.forEach(po=>row.push(getMapping(i,po.code)||''));
+    copoRows.push(row);
+  });
+  copoRows.push(['']);
+  copoRows.push(['Scale: 3=Strong | 2=Moderate | 1=Weak | blank=No Mapping']);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(copoRows), 'CO-PO Mapping');
+
+  // --- Sheet 3: Marks ---
+  const marksHeader = ['CO-Mapping', ...appState.courseOutcomes.map((_,i)=>`CO-${i+1}`), 'Total'];
+  const maxRow = ['Total Marks', ...appState.courseOutcomes.map(co=>co.marks), appState.courseOutcomes.reduce((s,co)=>s+co.marks,0)];
+  const marksRows = [[''],['MARKS ENTRY'],[''],['CIA Marks Entry (Continuous Internal Assessment)'],[''],[''],marksHeader,maxRow,['Marks Obtained']];
+  marksRows.push(['']);
+  const dataHeader = ['Rollno', ...appState.courseOutcomes.map((_,i)=>`CO-${i+1}`), 'Total'];
+  marksRows.push(dataHeader);
+  appState.ciaData.forEach(s=>{
+    const total = s.marks.reduce((a,b)=>a+b,0);
+    marksRows.push([s.rollNo, ...s.marks, total]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(marksRows), 'Marks');
+
+  // --- Sheet 4: Report ---
+  const threshold = metrics.threshold;
+  const reportHeader = [[''],['SKR & SKR GOVT. COLLEGE FOR WOMEN (A), KADAPA'],['DEPARTMENT OF '+dept.toUpperCase()],[''],['', '', '', '', 'ATTAINMENT OF OUTCOMES - '+cTitle+' ('+cCode+')'],[''],
+    ['', `CO1-THRESHOLD %=${threshold}`, threshold, '', `CO-2 THRESHOLD %=`, threshold, '', '', `CO-3 THRESHOLD %=`, threshold, '', '', `CO-4 THRESHOLD %=`, threshold],[''],[''],
+    ['RollNo', ...appState.courseOutcomes.map((_,i)=>`CO${i+1}-%`)]
+  ];
+  appState.ciaData.forEach(s=>{
+    const row = [s.rollNo];
+    s.marks.forEach((m,i)=>{
+      const maxM = appState.courseOutcomes[i].marks;
+      row.push(maxM>0?Math.round((m/maxM)*100*100)/100:0);
+    });
+    reportHeader.push(row);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(reportHeader), 'Report');
+
+  // --- Sheet 5: Level of Attainment ---
+  const loaRows = [
+    [''],[''],['', '', '', '', '', 'LEVEL OF ATTAINMENT'],[''],[''],
+    ['NAME OF THE PROGRAMME: '+prog],
+    ['NAME OF THE COURSE TEACHER: '+fName],
+    ['COURSE CODE:', '', cCode],
+    ['COURSE TITLE:', '', cTitle],
+    ['Academic Year:', '', ay, '', 'BATCH: '+batch+' ('+sem+' Semester)'],
+    [''],[''],[''],
+    ['', '', '', '', '', 'LEVEL OF ATTAINMENT', '', 'LEVEL', 1, 2, 3],[''],
+    ['', '', '', '', '', '%CO ATTAINMENT', '', '0 TO 30%', '30 TO 60%', '60 TO 100%'],[''],[''],
+    ['', '', '', '', '', 'CO', 'CO ATTAINMENT %', '', 'LEVEL']
+  ];
+  Object.keys(metrics.coMetrics).forEach(co=>{
+    const m = metrics.coMetrics[co];
+    loaRows.push(['','','','','',co, m.classAttainmentPercent.toFixed(2),'',m.attainmentLevel]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(loaRows), 'Level of Attainment');
+
+  // --- Sheet 6: Final ---
+  const finalRows = [
+    [''],[''],['','','','','FINAL SUMMARY - CO ATTAINMENT'],[''],
+    ['','Course:', cTitle+' ('+cCode+')'],
+    ['','Semester:', sem+' ('+prog+')'],
+    ['','Total Students:', metrics.totalStudents],
+    ['','Average CIA Score (out of '+metrics.totalMax+'):', (appState.ciaData.reduce((s,st)=>s+(st.marks||[]).reduce((a,b)=>a+b,0),0)/metrics.totalStudents).toFixed(2)],
+    ['','Average Attainment %:', metrics.avgAttainment.toFixed(2)],
+    [''],[''],
+    ['','CO','Attainment %','Level','Status']
+  ];
+  Object.keys(metrics.coMetrics).forEach(co=>{
+    const m = metrics.coMetrics[co];
+    const status = m.attainmentLevel===3?'Achieved':m.attainmentLevel===2?'Partially Achieved':'Not Achieved';
+    finalRows.push(['',co,m.classAttainmentPercent.toFixed(2),m.attainmentLevel,status]);
+  });
+  finalRows.push([''],[''],
+    ['','Faculty: '+fName,'','HOD: '+hodN,'','IQAC: '+iqacN,'','Principal: '+princN],
+    ['','Date: '+new Date().toLocaleDateString()],
+    [''],['','© Dr. C. V. Krishnaveni, Lecturer in Computer Science, SKR & SKR GCW(A), Kadapa']
+  );
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(finalRows), 'Final');
+
+  // --- Sheet 7: Action Plan ---
+  const ap = appState._actionPlan || {strengths:[],improvements:[],recommendations:[]};
+  const apRows = [
+    [''],['','','','','ACTION PLAN'],[''],
+    ['','Based on the attainment analysis, the following action plans are recommended:'],[''],
+    ['','Strengths:']
+  ];
+  (ap.strengths||[]).forEach(s=>apRows.push(['','• '+s]));
+  apRows.push([''],['','Areas for Improvement:']);
+  (ap.improvements||[]).forEach(s=>apRows.push(['','• '+s]));
+  apRows.push([''],['','Recommendations:']);
+  (ap.recommendations||[]).forEach(s=>apRows.push(['','• '+s]));
+  apRows.push([''],['','Prepared by: '+fName],['','Date: '+new Date().toLocaleDateString()]);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(apRows), 'Action Plan');
+
+  const fileName = `OBE_${cCode}_Sem${sem}_${ay}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+  showAlert('alert-review','✅ Excel report downloaded: '+fileName,'success');
+}
+
+// ==========================
+// PDF / PRINT REPORT
+// ==========================
+function generatePDFReport() {
+  const metrics = generateMetrics();
+  if(!metrics) { showAlert('alert-review','No data to export','error'); return; }
+
+  const fName = document.getElementById('facultyName').value;
+  const cCode = document.getElementById('courseCode').value;
+  const cTitle = document.getElementById('courseTitle').value;
+  const sem = document.getElementById('semester').value;
+  const ay = document.getElementById('academicYear').value;
+  const dept = document.getElementById('department').value;
+  const prog = document.getElementById('programme').value;
+  const batch = document.getElementById('batch').value;
+  const hodN = document.getElementById('hodName').value;
+  const iqacN = document.getElementById('iqacName').value;
+  const princN = document.getElementById('principalName').value;
+  const ap = appState._actionPlan||{strengths:[],improvements:[],recommendations:[]};
+
+  const copoRows = appState.courseOutcomes.map((co,i)=>{
+    const cells = appState.programmeOutcomes.map(po=>{
+      const v=getMapping(i,po.code);
+      const style=v===3?'background:#dbeafe;color:#1e40af;font-weight:bold':v===2?'background:#fef9c3;color:#b45309;font-weight:bold':v===1?'background:#dcfce7;color:#166534;font-weight:bold':'color:#ccc';
+      return `<td style="padding:5px 4px;border:1px solid #ddd;text-align:center;font-size:12px;${style}">${v||'–'}</td>`;
+    }).join('');
+    return `<tr><td style="padding:6px;border:1px solid #ddd;font-size:13px;font-weight:700;">CO${i+1}: ${co.description||''}</td>${cells}</tr>`;
+  }).join('');
+
+  const coAnalysisRows = Object.keys(metrics.coMetrics).map(co=>{
+    const m = metrics.coMetrics[co];
+    const bg = m.attainmentLevel===3?'#d1fae5':m.attainmentLevel===2?'#fef3c7':'#fee2e2';
+    const status = m.attainmentLevel===3?'Achieved':m.attainmentLevel===2?'Partially Achieved':'Not Achieved';
+    return `<tr style="background:${bg}">
+      <td style="padding:8px;border:1px solid #ddd;font-weight:700;">${co}</td>
+      <td style="padding:8px;border:1px solid #ddd;font-size:13px;">${m.description}</td>
+      <td style="padding:8px;border:1px solid #ddd;text-align:center;">${m.totalMarks}</td>
+      <td style="padding:8px;border:1px solid #ddd;text-align:center;">${m.studentsAboveThreshold}/${metrics.totalStudents}</td>
+      <td style="padding:8px;border:1px solid #ddd;text-align:center;font-weight:700;">${m.classAttainmentPercent.toFixed(2)}%</td>
+      <td style="padding:8px;border:1px solid #ddd;text-align:center;font-weight:700;">${m.attainmentLevel}</td>
+      <td style="padding:8px;border:1px solid #ddd;text-align:center;">${status}</td>
+    </tr>`;
+  }).join('');
+
+  const posHeader = appState.programmeOutcomes.map(po=>`<th style="padding:6px 4px;background:#1565C0;color:white;font-size:12px;">${po.code}</th>`).join('');
+
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>OBE Report - ${cCode}</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:14px;color:#222;margin:20px;}
+    .header{text-align:center;border-bottom:3px double #1565C0;padding-bottom:16px;margin-bottom:20px;}
+    .header h1{font-size:18px;font-weight:900;color:#1565C0;margin:4px 0;}
+    .header h2{font-size:22px;font-weight:900;color:#FF6F00;margin:6px 0;}
+    .info-table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+    .info-table td{padding:7px 12px;border:1px solid #ddd;font-size:14px;}
+    .info-table td:first-child{font-weight:700;background:#EEF4FF;width:35%;}
+    table.main{width:100%;border-collapse:collapse;margin-bottom:20px;}
+    table.main th{background:#1565C0;color:white;padding:9px 8px;font-size:13px;text-align:center;}
+    table.main td{padding:8px;border:1px solid #ddd;font-size:13px;}
+    .section{margin-bottom:26px;}
+    .section h3{font-size:17px;font-weight:900;color:#1565C0;border-left:5px solid #1565C0;padding-left:12px;margin-bottom:12px;}
+    .sig-row{display:flex;gap:30px;margin-top:40px;}
+    .sig-block{flex:1;text-align:center;}
+    .sig-line{border-bottom:2px solid #333;height:50px;margin-bottom:8px;}
+    .sig-label{font-size:13px;font-weight:700;}
+    .sig-name{font-size:12px;color:#555;}
+    .metric-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+    .metric-box{flex:1;min-width:120px;background:#1565C0;color:white;padding:14px;border-radius:8px;text-align:center;}
+    .metric-box .val{font-size:26px;font-weight:900;}
+    .metric-box .lbl{font-size:12px;opacity:0.9;}
+    .action-list li{padding:6px 0;font-size:14px;border-bottom:1px solid #eee;}
+    @media print{body{margin:10px;} .no-print{display:none;}}
+  </style></head><body>
+  <div class="header">
+    <h1>SKR &amp; SKR GOVERNMENT COLLEGE FOR WOMEN (AUTONOMOUS), KADAPA</h1>
+    <div style="font-size:14px;color:#333;">DEPARTMENT OF ${dept.toUpperCase()}</div>
+    <h2>OBE ATTAINMENT REPORT</h2>
+    <div style="font-size:15px;margin-top:4px;color:#555;">${cTitle} (${cCode})</div>
+  </div>
+
+  <div class="section">
+    <h3>Course Information</h3>
+    <table class="info-table">
+      <tr><td>Name of Course Teacher</td><td>${fName}</td></tr>
+      <tr><td>Course Code &amp; Title</td><td>${cCode} — ${cTitle}</td></tr>
+      <tr><td>Programme</td><td>${prog}</td></tr>
+      <tr><td>Department</td><td>${dept}</td></tr>
+      <tr><td>Semester</td><td>${sem}</td></tr>
+      <tr><td>Academic Year</td><td>${ay}</td></tr>
+      <tr><td>Batch</td><td>${batch}</td></tr>
+      <tr><td>Total Students</td><td>${metrics.totalStudents}</td></tr>
+      <tr><td>Threshold for Attainment</td><td>${metrics.threshold}%</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Overall Summary</h3>
+    <div class="metric-row">
+      <div class="metric-box"><div class="val">${metrics.totalStudents}</div><div class="lbl">Total Students</div></div>
+      <div class="metric-box"><div class="val">${metrics.overallAvgPct.toFixed(1)}%</div><div class="lbl">Avg CIA Score %</div></div>
+      <div class="metric-box" style="background:#2E7D32;"><div class="val">${metrics.avgAttainment.toFixed(1)}%</div><div class="lbl">Avg CO Attainment %</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Level of Attainment Scale</h3>
+    <table class="main">
+      <tr><th>Level</th><th>% CO Attainment</th><th>Description</th></tr>
+      <tr style="background:#fee2e2;"><td>1</td><td>0% to 30%</td><td>Not Achieved</td></tr>
+      <tr style="background:#fef9c3;"><td>2</td><td>30% to 60%</td><td>Partially Achieved</td></tr>
+      <tr style="background:#d1fae5;"><td>3</td><td>60% to 100%</td><td>Achieved</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>CO-wise Attainment Analysis</h3>
+    <table class="main">
+      <tr><th>CO</th><th style="text-align:left;">Description</th><th>Max Marks</th><th>Students ≥${metrics.threshold}%</th><th>Class Attainment %</th><th>Level</th><th>Status</th></tr>
+      ${coAnalysisRows}
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>CO-PO Mapping Matrix</h3>
+    <p style="font-size:12px;color:#555;margin-bottom:8px;">3=Strong | 2=Moderate | 1=Weak | –=No Mapping</p>
+    <table class="main" style="font-size:12px;">
+      <thead><tr>
+        <th style="text-align:left;min-width:180px;">Course Outcome</th>
+        ${posHeader}
+      </tr></thead>
+      <tbody>${copoRows}</tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Action Plan</h3>
+    <p style="font-weight:700;color:#1565C0;margin-bottom:8px;">Strengths:</p>
+    <ul class="action-list">${(ap.strengths||[]).map(s=>`<li>${s}</li>`).join('')}</ul>
+    <p style="font-weight:700;color:#E65100;margin:10px 0 8px;">Areas for Improvement:</p>
+    <ul class="action-list">${(ap.improvements||[]).map(s=>`<li>${s}</li>`).join('')}</ul>
+    <p style="font-weight:700;color:#1565C0;margin:10px 0 8px;">Recommendations:</p>
+    <ul class="action-list">${(ap.recommendations||[]).map(s=>`<li>${s}</li>`).join('')}</ul>
+  </div>
+
+  <div class="section">
+    <h3>Authorized Signatures</h3>
+    <div class="sig-row">
+      <div class="sig-block"><div class="sig-line"></div><div class="sig-label">Course Teacher / Lecturer</div><div class="sig-name">${fName}</div></div>
+      <div class="sig-block"><div class="sig-line"></div><div class="sig-label">HOD / Incharge</div><div class="sig-name">${hodN}</div></div>
+      <div class="sig-block"><div class="sig-line"></div><div class="sig-label">IQAC Coordinator</div><div class="sig-name">${iqacN}</div></div>
+      <div class="sig-block"><div class="sig-line"></div><div class="sig-label">Principal</div><div class="sig-name">${princN}</div></div>
+    </div>
+    <p style="margin-top:18px;font-size:13px;color:#555;">Date: ${new Date().toLocaleDateString()}</p>
+  </div>
+
+  <div style="text-align:center;margin-top:30px;font-size:12px;color:#777;border-top:1px solid #ddd;padding-top:12px;">
+    <p>© Dr. C. V. Krishnaveni, Lecturer in Computer Science, SKR &amp; SKR Government College for Women (Autonomous), Kadapa</p>
+    <p style="margin-top:4px;">Generated on ${new Date().toLocaleString()}</p>
+  </div>
+
+  <div class="no-print" style="text-align:center;margin:20px;">
+    <button onclick="window.print()" style="padding:14px 36px;background:#1565C0;color:white;border:none;border-radius:8px;font-size:18px;font-weight:700;cursor:pointer;">🖨️ Print / Save as PDF</button>
+  </div>
+  <script>setTimeout(()=>window.print(),500);<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+// Init CO list on load
+renderCOInputs();
+</script>
+</body>
+</html>
