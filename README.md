@@ -179,6 +179,9 @@ If this tool helps your college:
 🏫 Use for NAAC / IQAC documentation  
 
 ---
+**Repository Note:** 
+
+Developed and maintained by Dr. C. V. Krishnaveni for academic and IQAC automation purposes. This repository may be migrated to the author’s personal GitHub account for continuity and long-term maintenance.
 
 <div align="center">
 
